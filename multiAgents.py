@@ -66,30 +66,32 @@ class ReflexAgent(Agent):
         Print out these variables to see what you're getting, then combine them
         to create a masterful evaluation function.
         """
-        # Useful information you can extract from a GameState (pacman.py)
+        # Información valiosa es extraída (pacman.py)
         childGameState = currentGameState.getPacmanNextState(action)
         newPos = childGameState.getPacmanPosition()
         newFood = childGameState.getFood()
         newGhostStates = childGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
-        # Initialize the score to the current game score
+        # Inicializar el puntaje
         score = childGameState.getScore()
 
-        # Find the distance to the nearest food and add the inverse of this distance to the score
+        # Encontrar la distancia al alimento más cercano y agregar la inversa de esta distancia al puntaje
         foodDistances = [manhattanDistance(newPos, food) for food in newFood.asList()]
         if foodDistances:
-            score += 1.0 / min(foodDistances)
+            score += 10.0 / min(foodDistances)  # Agregar la inversa de la distancia al alimento más cercano al puntaje e incrementar el puntaje
 
-        # For each ghost, if the ghost is scared and the scared time is more than the distance to the ghost,
-        # add a large number to the score. Otherwise, if the distance to the ghost is less than a certain threshold,
-        # subtract a large number from the score
+        # Para cada fantasma, si el fantasma está asustado y el tiempo asustado es mayor que la distancia al fantasma,
+        # agregar un número grande al puntaje. De lo contrario, si la distancia al fantasma es menor que un cierto umbral,
+        # restar un número grande al puntaje
         for i, ghostState in enumerate(newGhostStates):
             ghostDistance = manhattanDistance(newPos, ghostState.getPosition())
             if newScaredTimes[i] > ghostDistance:
                 score += 100
             elif ghostDistance < 2:
-                score -= 200
+                score -= 100  # Decrementar el puntaje por estar cerca de un fantasma
+            elif action == Directions.STOP:
+                score -= 500  # Decrementar el puntaje por quedarse quieto
 
         return score
 
