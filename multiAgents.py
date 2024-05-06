@@ -232,8 +232,67 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         Returns the minimax action using self.depth and self.evaluationFunction
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def minimize(state, depth, agent, alpha, beta): # Fantasmas
+            bestCase = float('inf') # El mejor caso posible para los fantasmas es infinito, que también es el peor para el PacMan
+            minimum = bestCase # Inicializar el mínimo con el mejor caso
+            if state.isWin() or state.isLose(): # Si el estado es una victoria o derrota
+                return self.evaluationFunction(state) # Devolver la evaluación del estado
+            
+            # De lo contrario, obtener el siguiente agente y recorrer las acciones legales para este
+            next_agent = agent + 1 if agent + 1 < state.getNumAgents() else 0 # Recorrer los agentes y reiniciar si se alcanza el último (Pacman)
+            
+            
+            for action in state.getLegalActions(agent): # Por cada acción legal
+                if next_agent == 0 and depth + 1 == self.depth: # Si el siguiente agente es Pacman y el siguiente nivel es la profundidad máxima
+                    minimum = self.evaluationFunction(state.getNextState(agent, action)) # Evaluar el estado
+                elif next_agent == 0: # Si el siguiente agente es solo Pacman
+                    minimum = maximize(state.getNextState(agent, action), depth + 1, alpha, beta) # Maximizar el estado
+                else: # Si el siguiente agente es un fantasma
+                    minimum = minimize(state.getNextState(agent, action), depth, next_agent, alpha, beta) # Minimizar el estado
+               
+
+                bestCase = min(bestCase, minimum) # Obtener el mínimo entre el mejor caso y el mínimo
+                
+                # Actualizar el beta con el mejor caso (el peor caso para PacMan)
+                beta = min(beta, bestCase)
+                
+                # Si el mejor caso es menor que el alpha, se devuelve el mejor caso (pruning)
+                if bestCase < alpha:
+                    return bestCase
+                
+            return bestCase # Devolver el mejor caso
+        
+        def maximize(state, depth, alpha, beta): # Pacman
+            worstCase = float('-inf') # El peor caso posible para Pacman es infinito negativo, se asume el peor de todos los casos
+            toGo = Directions.STOP # Inicializar la dirección a seguir con STOP, por si no hay acciones legales
+            if state.isWin() or state.isLose(): # Si el estado es una victoria o derrota
+                return self.evaluationFunction(state) # Devolver la evaluación del estado
+            
+            # De lo contrario, recorrer las acciones legales para Pacman
+            if state.getLegalActions(0):
+                for action in state.getLegalActions(0):
+                    
+                    # Si la minimización del siguiente estado del PacMan es mayor que el peor caso, se maximiza actualizándolo con el peor (mejor) caso y se guarda la acción
+                    minimized = minimize(state.getNextState(0, action), depth, 1, alpha, beta)
+                    if minimized > worstCase:
+                        worstCase = minimized
+                        toGo = action
+                    # Se maximiza de esta forma debido a que es necesario obtener la acción, no solo el valor del minimax
+                    
+                    # Se actualiza el alpha con el peor (mejor) caso
+                    alpha = max(alpha, worstCase)
+                    
+                    # Si el peor caso es mayor que el beta, se devuelve el peor caso (pruning)
+                    if worstCase > beta:
+                        return worstCase
+            
+            # Si la profundidad es 0, devolver la acción a seguir, de lo contrario, devolver el peor caso
+            if depth == 0:
+                return toGo
+            else: 
+                return worstCase
+            
+        return maximize(gameState, 0, float('-inf'), float('inf'))
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
