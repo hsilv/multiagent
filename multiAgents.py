@@ -306,8 +306,49 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         All ghosts should be modeled as choosing uniformly at random from their
         legal moves.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def minimize(state, depth, agent): # Fantasmas
+            if state.isWin() or state.isLose(): # Si el estado es una victoria o derrota
+                return self.evaluationFunction(state) # Devolver la evaluación del estado
+
+            next_agent = agent + 1 if agent + 1 < state.getNumAgents() else 0 # Recorrer los agentes y reiniciar si se alcanza el último (Pacman)
+            actions = state.getLegalActions(agent) # Obtener las acciones legales
+            uniform = 1.0 / len(actions) # Probabilidad uniforme
+
+            expected_value = 0 # Inicializar el valor esperado
+            for action in actions: # Por cada acción legal
+                if next_agent == 0 and depth + 1 == self.depth: # Si el siguiente agente es Pacman y se alcanza la profundidad máxima
+                    expected_value += uniform * self.evaluationFunction(state.getNextState(agent, action))
+                elif next_agent == 0: # Si el siguiente agente es solo Pacman
+                    expected_value += uniform * maximize(state.getNextState(agent, action), depth + 1) # Maximizar el estado
+                else: # Si el siguiente agente es un fantasma
+                    expected_value += uniform * minimize(state.getNextState(agent, action), depth, next_agent) # Minimizar el estado
+
+            return expected_value # Devolver el valor esperado
+        
+        def maximize(state, depth): # Pacman
+            worstCase = float('-inf') # El peor caso posible para Pacman es infinito negativo, se asume el peor de todos los casos
+            toGo = Directions.STOP # Inicializar la dirección a seguir con STOP, por si no hay acciones legales
+            if state.isWin() or state.isLose(): # Si el estado es una victoria o derrota
+                return self.evaluationFunction(state) # Devolver la evaluación del estado
+            
+            # De lo contrario, recorrer las acciones legales para Pacman
+            if state.getLegalActions(0):
+                for action in state.getLegalActions(0):
+                    
+                    # Si la minimización del siguiente estado del PacMan es mayor que el peor caso, se maximiza actualizándolo con el peor (mejor) caso y se guarda la acción
+                    minimized = minimize(state.getNextState(0, action), depth, 1)
+                    if minimized > worstCase:
+                        worstCase = minimized
+                        toGo = action
+                    # Se maximiza de esta forma debido a que es necesario obtener la acción, no solo el valor del minimax
+            
+            # Si la profundidad es 0, devolver la acción a seguir, de lo contrario, devolver el peor caso
+            if depth == 0:
+                return toGo
+            else: 
+                return worstCase
+            
+        return maximize(gameState, 0)
 
 def betterEvaluationFunction(currentGameState):
     """
