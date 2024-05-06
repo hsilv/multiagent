@@ -154,7 +154,74 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        
+        """ def minimax(agent, depth, gameState):
+            if gameState.isWin() or gameState.isLose() or depth == self.depth * gameState.getNumAgents():
+                result = self.evaluationFunction(gameState)
+                return result
+            nextAgent = agent + 1 if agent + 1 < gameState.getNumAgents() else 0
+            actions = gameState.getLegalActions(agent)
+            if not actions:  # No legal actions, return a default value
+                result = self.evaluationFunction(gameState)
+                return result
+            
+            if depth%2 == 0:  # Pacman
+                result = (minimax(nextAgent, depth+1, gameState.getNextState(agent, action)) 
+                            for action in actions)
+                max_result = max(result)
+                return max_result
+            elif depth%2 != 0 or agent != 0:  # Ghosts
+                result = (minimax(nextAgent, depth+1, gameState.getNextState(agent, action)) 
+                            for action in actions)
+                min_result = min(result)
+                return min_result
+        moves = gameState.getLegalActions(0)
+        minimax_results = [(move, minimax(0, 1, gameState.getNextState(0, move))) for move in moves]
+        move = max(minimax_results, key=lambda x: x[1])[0]
+        return move """
+        
+        def minimize(state, depth, agent): # Fantasmas
+            bestCase = float('inf') # El mejor caso posible para los fantasmas es infinito, que también es el peor para el PacMan
+            minimum = bestCase # Inicializar el mínimo con el mejor caso
+            if state.isWin() or state.isLose() or depth == self.depth: # Si el estado es una victoria o derrota o si se alcanza la profundidad máxima
+                return self.evaluationFunction(state) # Devolver la evaluación del estado
+            
+            # De lo contrario, obtener el siguiente agente y recorrer las acciones legales para este
+            next_agent = agent + 1 if agent + 1 < state.getNumAgents() else 0 # Recorrer los agentes y reiniciar si se alcanza el último (Pacman)
+            for action in state.getLegalActions(agent): # Por cada acción legal
+                if next_agent == 0 and depth + 1 == self.depth: # Si el siguiente agente es Pacman y se alcanza la profundidad máxima
+                    minimum = self.evaluationFunction(state.getNextState(agent, action)) # Evaluar el estado
+                elif next_agent == 0: # Si el siguiente agente es solo Pacman
+                    minimum = maximize(state.getNextState(agent, action), depth + 1) # Maximizar el estado
+                else: # Si el siguiente agente es un fantasma
+                    minimum = minimize(state.getNextState(agent, action), depth, next_agent) # Minimizar el estado
+                bestCase = min(bestCase, minimum) # Obtener el mínimo entre el mejor caso y el mínimo
+            return bestCase # Devolver el mejor caso
+        
+        def maximize(state, depth): # Pacman
+            worstCase = float('-inf') # El peor caso posible para Pacman es infinito negativo, se asume el peor de todos los casos
+            toGo = Directions.STOP # Inicializar la dirección a seguir con STOP, por si no hay acciones legales
+            if state.isWin() or state.isLose() or depth == self.depth: # Si el estado es una victoria o derrota o si se alcanza la profundidad máxima
+                return self.evaluationFunction(state) # Devolver la evaluación del estado
+            
+            # De lo contrario, recorrer las acciones legales para Pacman
+            if state.getLegalActions(0):
+                for action in state.getLegalActions(0):
+                    
+                    # Si la minimización del siguiente estado del PacMan es mayor que el peor caso, se maximiza actualizándolo con el peor (mejor) caso y se guarda la acción
+                    if minimize(state.getNextState(0, action), depth, 1) > worstCase:
+                        worstCase = minimize(state.getNextState(0, action), depth, 1)
+                        toGo = action
+                    # Se maximiza de esta forma debido a que es necesario obtener la acción, no solo el valor del minimax
+            
+            # Si la profundidad es 0, devolver la acción a seguir, de lo contrario, devolver el peor caso
+            if depth == 0:
+                return toGo
+            else: 
+                return worstCase
+            
+        return maximize(gameState, 0)
+            
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
